@@ -87,6 +87,8 @@ describe("Drizzle Extension", () => {
 
     expect(() => {
       helpers.ksuid("NonExistentModel");
-    }).toThrow('No KSUID prefix defined for model "NonExistentModel"');
+    }).toThrowError(
+      /No KSUID prefix defined for model "NonExistentModel"./
+    );
   });
 });

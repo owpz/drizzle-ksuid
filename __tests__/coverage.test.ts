@@ -136,13 +136,13 @@ describe("Coverage Tests - All Column Helpers", () => {
     });
 
     test("MySQL text helper creates column with default column name", () => {
-      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql") as ReturnType<typeof createKsuidHelpers> & { ksuidText: (modelName: string, columnName?: string) => any };
+      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql");
       const column = helpers.ksuidText("User");
       expect(column).toBeDefined();
     });
 
     test("MySQL text helper creates column with custom column name", () => {
-      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql") as ReturnType<typeof createKsuidHelpers> & { ksuidText: (modelName: string, columnName?: string) => any };
+      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql");
       const column = helpers.ksuidText("User", "custom_id");
       expect(column).toBeDefined();
     });

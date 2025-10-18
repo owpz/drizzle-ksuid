@@ -18,6 +18,11 @@ export {
   mysql,
   sqlite,
 } from "./drizzle-extension";
+export type {
+  KsuidDialect,
+  KsuidHelperGroup,
+  KsuidPrefixMap,
+} from "./drizzle-extension";
 
 /**
  * Generates a K-Sortable Unique ID (KSUID) with an optional prefix.

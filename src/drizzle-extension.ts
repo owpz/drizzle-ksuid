@@ -1,5 +1,4 @@
 import { generateKSUID } from "./util/ksuid";
-import type { ColumnBuilderBaseConfig } from "drizzle-orm";
 import { text as pgText } from "drizzle-orm/pg-core";
 import { varchar as mysqlVarchar, text as mysqlText } from "drizzle-orm/mysql-core";
 import { text as sqliteText } from "drizzle-orm/sqlite-core";
@@ -133,49 +132,73 @@ export function ksuidTextSqlite(name: string, options: KsuidColumnOptions = {}) 
  * });
  * ```
  */
-export function createKsuidHelpers(
+type Dialect = "pg" | "mysql" | "sqlite";
+type PrefixGetter = (modelName: string) => string;
+
+type PgHelpers = {
+  ksuid(modelName: string, columnName?: string): ReturnType<typeof ksuidText>;
+};
+
+type MysqlHelpers = {
+  ksuid(modelName: string, columnName?: string, length?: number): ReturnType<typeof ksuidVarchar>;
+  ksuidText(modelName: string, columnName?: string): ReturnType<typeof ksuidTextMysql>;
+};
+
+type SqliteHelpers = {
+  ksuid(modelName: string, columnName?: string): ReturnType<typeof ksuidTextSqlite>;
+};
+
+type HelperMap = {
+  pg: PgHelpers;
+  mysql: MysqlHelpers;
+  sqlite: SqliteHelpers;
+};
+
+const buildHelpers: { [K in Dialect]: (getPrefix: PrefixGetter) => HelperMap[K] } = {
+  pg: (getPrefix) => ({
+    ksuid: (modelName, columnName = "id") => {
+      const prefix = getPrefix(modelName);
+      return ksuidText(columnName, { prefix });
+    },
+  }),
+  mysql: (getPrefix) => ({
+    ksuid: (modelName, columnName = "id", length = 64) => {
+      const prefix = getPrefix(modelName);
+      return ksuidVarchar(columnName, { prefix, length });
+    },
+    ksuidText: (modelName, columnName = "id") => {
+      const prefix = getPrefix(modelName);
+      return ksuidTextMysql(columnName, { prefix });
+    },
+  }),
+  sqlite: (getPrefix) => ({
+    ksuid: (modelName, columnName = "id") => {
+      const prefix = getPrefix(modelName);
+      return ksuidTextSqlite(columnName, { prefix });
+    },
+  }),
+};
+
+export function createKsuidHelpers<D extends Dialect = "pg">(
   prefixMap: PrefixMap,
-  dialect: "pg" | "mysql" | "sqlite" = "pg"
-) {
-  const getPrefix = (modelName: string): string => {
+  dialect: D = "pg" as D
+): HelperMap[D] {
+  const getPrefix: PrefixGetter = (modelName) => {
     const prefix = prefixMap[modelName];
     if (!prefix) {
+      const availableModels = Object.keys(prefixMap);
+      const availableText = availableModels.length
+        ? ` Available models: ${availableModels.join(", ")}`
+        : " No prefixes have been configured.";
+
       throw new Error(
-        `No KSUID prefix defined for model "${modelName}". Available models: ${Object.keys(prefixMap).join(", ")}`
+        `No KSUID prefix defined for model "${modelName}".${availableText}`
       );
     }
     return prefix;
   };
 
-  if (dialect === "pg") {
-    return {
-      ksuid: (modelName: string, columnName = "id") => {
-        const prefix = getPrefix(modelName);
-        return ksuidText(columnName, { prefix });
-      },
-    };
-  }
-
-  if (dialect === "mysql") {
-    return {
-      ksuid: (modelName: string, columnName = "id", length = 64) => {
-        const prefix = getPrefix(modelName);
-        return ksuidVarchar(columnName, { prefix, length });
-      },
-      ksuidText: (modelName: string, columnName = "id") => {
-        const prefix = getPrefix(modelName);
-        return ksuidTextMysql(columnName, { prefix });
-      },
-    };
-  }
-
-  // SQLite
-  return {
-    ksuid: (modelName: string, columnName = "id") => {
-      const prefix = getPrefix(modelName);
-      return ksuidTextSqlite(columnName, { prefix });
-    },
-  };
+  return buildHelpers[dialect](getPrefix);
 }
 
 /**
@@ -199,3 +222,7 @@ export const mysql = {
 export const sqlite = {
   ksuidText: ksuidTextSqlite,
 };
+
+export type KsuidDialect = Dialect;
+export type KsuidPrefixMap = PrefixMap;
+export type KsuidHelperGroup<D extends Dialect = Dialect> = HelperMap[D];
