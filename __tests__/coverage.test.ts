@@ -136,13 +136,13 @@ describe("Coverage Tests - All Column Helpers", () => {
     });
 
     test("MySQL text helper creates column with default column name", () => {
-      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql") as ReturnType<typeof createKsuidHelpers> & { ksuidText: (modelName: string, columnName?: string) => any };
+      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql");
       const column = helpers.ksuidText("User");
       expect(column).toBeDefined();
     });
 
     test("MySQL text helper creates column with custom column name", () => {
-      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql") as ReturnType<typeof createKsuidHelpers> & { ksuidText: (modelName: string, columnName?: string) => any };
+      const helpers = createKsuidHelpers({ User: "usr_" }, "mysql");
       const column = helpers.ksuidText("User", "custom_id");
       expect(column).toBeDefined();
     });
@@ -177,6 +177,13 @@ describe("Coverage Tests - All Column Helpers", () => {
       expect(helpers.ksuid).toBeDefined();
       const column = helpers.ksuid("User");
       expect(column).toBeDefined();
+    });
+
+    test("derives prefixes automatically when missing", () => {
+      const helpers = createKsuidHelpers();
+      const column = helpers.ksuid("WidgetThing") as any;
+      const generated = column.config.defaultFn();
+      expect(generated.startsWith("widget_thing_")).toBe(true);
     });
   });
 

@@ -6,6 +6,84 @@
 
 A production-ready Drizzle ORM extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
+## 🚀 Quick Install (Recommended)
+
+The fastest way to get going is to centralize your prefixes with `createKsuidHelpers` and reuse the generated helpers across your schema. The example below targets PostgreSQL, but the same pattern works for MySQL and SQLite by changing the dialect argument.
+
+### 1. Install once
+
+```bash
+npm install @owpz/drizzle-ksuid
+# or: yarn add @owpz/drizzle-ksuid
+# or: pnpm add @owpz/drizzle-ksuid
+```
+
+### 2. Create a shared helper (e.g. `src/db/ksuid.ts`)
+
+```typescript
+import { createKsuidHelpers } from '@owpz/drizzle-ksuid';
+
+export const { ksuid } = createKsuidHelpers(
+  {
+    User: 'usr_',
+    Post: 'post_',
+    Comment: 'cmt_',
+  },
+  'pg' // Change to 'mysql' or 'sqlite' as needed
+);
+
+// Tip: omit the map to derive prefixes automatically (User -> user_)
+// export const { ksuid } = createKsuidHelpers();
+```
+
+### 3. Define tables with the helper
+
+```typescript
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { ksuid } from './ksuid';
+
+export const users = pgTable('users', {
+  id: ksuid('User').primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const posts = pgTable('posts', {
+  id: ksuid('Post').primaryKey(),
+  title: text('title').notNull(),
+  authorId: text('author_id').notNull().references(() => users.id),
+});
+```
+
+### 4. Insert records—IDs are generated automatically
+
+```typescript
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema';
+
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client, { schema });
+
+const [user] = await db.insert(schema.users).values({
+  email: 'user@example.com',
+  name: 'Quick Install User',
+}).returning();
+
+console.log(user.id); // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
+```
+
+> **Other dialects:** Pass `'mysql'` or `'sqlite'` to `createKsuidHelpers` and the returned helpers will use `VARCHAR` or `TEXT` defaults that suit each database automatically.
+
+### Dialect Independence
+
+Only the pieces you import are required at runtime. You can ship purely-MySQL code without Postgres or SQLite clients because:
+
+- This library’s sole runtime dependency is `@owpz/ksuid`.
+- Dialect helpers import the corresponding `drizzle-orm/*-core` modules, which match the database you already target.
+- Database drivers such as `pg`, `mysql2`, or `better-sqlite3` are only dev-time dependencies for the example and test suite—you decide which driver to include in your application.
+
 ## 📋 Project Links
 
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute, report issues, and submit pull requests
@@ -140,6 +218,8 @@ export const comments = pgTable('comments', {
   postId: text('post_id').notNull().references(() => posts.id),
 });
 ```
+
+> Skip the map entirely by calling `createKsuidHelpers()` without arguments—the helper will turn model names into snake-cased prefixes like `order_item_` automatically.
 
 ### Dialect-Specific Exports
 
@@ -280,12 +360,12 @@ Creates an SQLite text column with KSUID auto-generation.
 ksuidTextSqlite('id', { prefix: 'usr_' }).primaryKey()
 ```
 
-### `createKsuidHelpers(prefixMap, dialect?)`
+### `createKsuidHelpers(prefixMap?, dialect?)`
 
 Creates a factory function for generating KSUID columns with predefined prefixes.
 
 **Parameters:**
-- `prefixMap` (Record<string, string>): Map of model names to prefixes
+- `prefixMap` (Record<string, string>, optional): Map of model names to prefixes. If omitted or missing an entry, a snake-cased prefix ending with `_` is derived from the model name (e.g. `UserProfile` → `user_profile_`).
 - `dialect` ('pg' | 'mysql' | 'sqlite', optional): Database dialect (default: `'pg'`)
 
 **Returns:** Object with helper methods
