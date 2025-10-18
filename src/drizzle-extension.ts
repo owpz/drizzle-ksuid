@@ -154,15 +154,29 @@ type HelperMap = {
   sqlite: SqliteHelpers;
 };
 
-const toSnakeCase = (value: string) => {
-  const normalized = value
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[\s-]+/g, "_")
-    .replace(/__+/g, "_")
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "");
+const derivePrefix = (value: string) => {
+  const spaced = value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[\s-]+/g, " ")
+    .replace(/[^a-z0-9 ]+/gi, " ")
+    .trim()
+    .toLowerCase();
 
-  const base = normalized || "id";
+  const words = spaced.split(/\s+/).filter(Boolean);
+  const condensed = words.join("");
+  const initials = words.map((word) => word[0]).join("");
+
+  let base = "";
+
+  if (initials.length >= 2) {
+    base = initials.slice(0, 4);
+  } else if (condensed.length >= 2) {
+    base = condensed.slice(0, 4);
+  } else {
+    const fallback = condensed || "id";
+    base = (fallback + "id").slice(0, 2);
+  }
+
   return base.endsWith("_") ? base : `${base}_`;
 };
 
@@ -197,19 +211,18 @@ export function createKsuidHelpers<D extends Dialect = "pg">(
 ): HelperMap[D] {
   const cache = new Map<string, string>();
   const getPrefix: PrefixGetter = (modelName) => {
-    const prefix = prefixMap[modelName];
-    if (prefix) {
-      return prefix;
+    const configured = prefixMap[modelName];
+    if (configured !== undefined) {
+      cache.set(modelName, configured);
+      return configured;
     }
 
-    if (cache.has(modelName)) {
-      const cached = cache.get(modelName);
-      if (cached !== undefined) {
-        return cached;
-      }
+    const cached = cache.get(modelName);
+    if (cached !== undefined) {
+      return cached;
     }
 
-    const derived = toSnakeCase(modelName);
+    const derived = derivePrefix(modelName);
     cache.set(modelName, derived);
     return derived;
   };

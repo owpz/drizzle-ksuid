@@ -87,6 +87,6 @@ describe("Drizzle Extension", () => {
     const column = helpers.ksuid("OrderItem") as any;
     const generatedId = column.config.defaultFn();
 
-    expect(generatedId.startsWith("order_item_")).toBe(true);
+    expect(generatedId.startsWith("oi_")).toBe(true);
   });
 });
