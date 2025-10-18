@@ -32,7 +32,7 @@ export const { ksuid } = createKsuidHelpers(
   'pg' // Change to 'mysql' or 'sqlite' as needed
 );
 
-// Tip: omit the map to derive prefixes automatically (User -> user_)
+// Tip: omit the map to derive short prefixes automatically (UserProfile -> up_)
 // export const { ksuid } = createKsuidHelpers();
 ```
 
@@ -219,7 +219,7 @@ export const comments = pgTable('comments', {
 });
 ```
 
-> Skip the map entirely by calling `createKsuidHelpers()` without arguments—the helper will turn model names into snake-cased prefixes like `order_item_` automatically.
+> Skip the map entirely by calling `createKsuidHelpers()` without arguments—the helper will turn model names into concise prefixes like `OrderItem` → `oi_` automatically.
 
 ### Dialect-Specific Exports
 
@@ -365,7 +365,7 @@ ksuidTextSqlite('id', { prefix: 'usr_' }).primaryKey()
 Creates a factory function for generating KSUID columns with predefined prefixes.
 
 **Parameters:**
-- `prefixMap` (Record<string, string>, optional): Map of model names to prefixes. If omitted or missing an entry, a snake-cased prefix ending with `_` is derived from the model name (e.g. `UserProfile` → `user_profile_`).
+- `prefixMap` (Record<string, string>, optional): Map of model names to prefixes. If omitted or missing an entry, a short lowercase prefix ending with `_` is derived from the model name (e.g. `UserProfile` → `up_`).
 - `dialect` ('pg' | 'mysql' | 'sqlite', optional): Database dialect (default: `'pg'`)
 
 **Returns:** Object with helper methods
