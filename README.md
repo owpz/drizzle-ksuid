@@ -6,7 +6,7 @@
 
 A production-ready Drizzle ORM extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
-## 🚀 Happy Path (Recommended)
+## 🚀 Quick Install (Recommended)
 
 The fastest way to get going is to centralize your prefixes with `createKsuidHelpers` and reuse the generated helpers across your schema. The example below targets PostgreSQL, but the same pattern works for MySQL and SQLite by changing the dialect argument.
 
@@ -65,7 +65,7 @@ const db = drizzle(client, { schema });
 
 const [user] = await db.insert(schema.users).values({
   email: 'user@example.com',
-  name: 'Happy Path User',
+  name: 'Quick Install User',
 }).returning();
 
 console.log(user.id); // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
