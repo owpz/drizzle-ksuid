@@ -3,18 +3,18 @@ import * as schema from "./schemas/sqlite";
 import { KSUID } from "@owpz/ksuid";
 
 describe("Extension Integration Tests", () => {
-  let db: ReturnType<typeof getDb>;
+  let db: Awaited<ReturnType<typeof getDb>>;
 
-  beforeAll(() => {
-    db = getDb();
+  beforeAll(async () => {
+    db = await getDb();
   });
 
-  afterEach(() => {
-    resetDb();
+  afterEach(async () => {
+    await resetDb();
   });
 
-  afterAll(() => {
-    closeDb();
+  afterAll(async () => {
+    await closeDb();
   });
 
   test("generates KSUIDs with correct prefixes for create operations", async () => {
