@@ -59,12 +59,13 @@ describe("E2E MySQL Tests", () => {
 
     await connection.execute(`
       CREATE TABLE products (
-        id TEXT PRIMARY KEY,
+        id TEXT NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         price DOUBLE NOT NULL,
         category VARCHAR(100) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id(64))
       )
     `);
   });
