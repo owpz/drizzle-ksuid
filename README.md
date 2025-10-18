@@ -73,6 +73,14 @@ console.log(user.id); // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
 
 > **Other dialects:** Pass `'mysql'` or `'sqlite'` to `createKsuidHelpers` and the returned helpers will use `VARCHAR` or `TEXT` defaults that suit each database automatically.
 
+### Dialect Independence
+
+Only the pieces you import are required at runtime. You can ship purely-MySQL code without Postgres or SQLite clients because:
+
+- This library’s sole runtime dependency is `@owpz/ksuid`.
+- Dialect helpers import the corresponding `drizzle-orm/*-core` modules, which match the database you already target.
+- Database drivers such as `pg`, `mysql2`, or `better-sqlite3` are only dev-time dependencies for the example and test suite—you decide which driver to include in your application.
+
 ## 📋 Project Links
 
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute, report issues, and submit pull requests

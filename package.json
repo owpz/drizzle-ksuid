@@ -50,7 +50,8 @@
     "pg": "^8.11.3",
     "ts-jest": "^29.3.2",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.0"
+    "typescript-eslint": "^8.31.0",
+    "better-sqlite3": "11.0.0"
   },
   "keywords": [
     "drizzle",
@@ -78,7 +79,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@owpz/ksuid": "^25.7.20",
-    "better-sqlite3": "11.0.0"
+    "@owpz/ksuid": "^25.7.20"
   }
 }
