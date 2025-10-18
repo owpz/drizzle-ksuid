@@ -1,49 +1,49 @@
-# Contributing to prisma-ksuid
+# Contributing to drizzle-ksuid
 
-Thank you for your interest in contributing to prisma-ksuid! This document provides guidelines for obtaining the software, providing feedback, and contributing to the project.
+Thank you for your interest in contributing to drizzle-ksuid! This document provides guidelines for obtaining the software, providing feedback, and contributing to the project.
 
 ## Obtaining the Software
 
-You can obtain prisma-ksuid through the following methods:
+You can obtain drizzle-ksuid through the following methods:
 
 ### Via npm
 ```bash
-npm install @owpz/prisma-ksuid
+npm install @owpz/drizzle-ksuid
 ```
 
 ### Via yarn
 ```bash
-yarn add @owpz/prisma-ksuid
+yarn add @owpz/drizzle-ksuid
 ```
 
 ### Via pnpm
 ```bash
-pnpm add @owpz/prisma-ksuid
+pnpm add @owpz/drizzle-ksuid
 ```
 
 ### From Source
 Clone the repository from GitHub:
 ```bash
-git clone https://github.com/owpz/prisma-ksuid.git
-cd prisma-ksuid
+git clone https://github.com/owpz/drizzle-ksuid.git
+cd drizzle-ksuid
 npm install
 ```
 
 ## Providing Feedback
 
-We welcome all feedback to help improve prisma-ksuid. There are several ways to provide feedback:
+We welcome all feedback to help improve drizzle-ksuid. There are several ways to provide feedback:
 
 ### Bug Reports
-If you encounter a bug, please report it by [creating a new issue](https://github.com/owpz/prisma-ksuid/issues/new) on GitHub. When reporting bugs, please include:
+If you encounter a bug, please report it by [creating a new issue](https://github.com/owpz/drizzle-ksuid/issues/new) on GitHub. When reporting bugs, please include:
 - A clear and descriptive title
 - Steps to reproduce the issue
 - Expected behavior
 - Actual behavior
-- Your environment (Node.js version, Prisma version, OS)
+- Your environment (Node.js version, Drizzle ORM version, OS)
 - Any relevant error messages or logs
 
 ### Feature Requests and Enhancements
-For feature requests or enhancement suggestions, please [create a new issue](https://github.com/owpz/prisma-ksuid/issues/new) on GitHub with:
+For feature requests or enhancement suggestions, please [create a new issue](https://github.com/owpz/drizzle-ksuid/issues/new) on GitHub with:
 - A clear description of the proposed feature
 - Use cases and examples
 - Why this feature would be valuable to the project
@@ -53,17 +53,17 @@ For feature requests or enhancement suggestions, please [create a new issue](htt
 
 ## Contributing Code
 
-We appreciate code contributions! All contributions to prisma-ksuid are made through **Pull Requests** on GitHub.
+We appreciate code contributions! All contributions to drizzle-ksuid are made through **Pull Requests** on GitHub.
 
 ### Contribution Process
 
 Our contribution process uses GitHub Pull Requests:
 
-1. **Fork** the repository on GitHub at https://github.com/owpz/prisma-ksuid
+1. **Fork** the repository on GitHub at https://github.com/owpz/drizzle-ksuid
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/prisma-ksuid.git
-   cd prisma-ksuid
+   git clone https://github.com/YOUR_USERNAME/drizzle-ksuid.git
+   cd drizzle-ksuid
    ```
 3. **Create a new branch** for your feature or fix:
    ```bash
@@ -87,7 +87,7 @@ Our contribution process uses GitHub Pull Requests:
    ```bash
    git push origin feature/your-feature-name
    ```
-9. **Submit a Pull Request** to the `main` branch at https://github.com/owpz/prisma-ksuid/pulls
+9. **Submit a Pull Request** to the `main` branch at https://github.com/owpz/drizzle-ksuid/pulls
 
 ### Contribution Requirements
 
@@ -139,8 +139,8 @@ To create a draft PR:
 #### Development Setup
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/prisma-ksuid.git
-cd prisma-ksuid
+git clone https://github.com/YOUR_USERNAME/drizzle-ksuid.git
+cd drizzle-ksuid
 
 # Install dependencies
 npm install
@@ -151,17 +151,8 @@ npm test
 # Build the project
 npm run build
 
-# Check types (if available)
-npm run type-check
-
 # Run linter
 npm run lint
-
-# Format code with Prettier
-npm run format
-
-# Check formatting without changing files
-npm run format:check
 ```
 
 ### Commit Message Format
@@ -178,15 +169,15 @@ Example: `feat: add support for composite primary keys`
 
 ## Questions and Discussions
 
-For general questions or discussions about prisma-ksuid, feel free to:
-- Open a [GitHub Discussion](https://github.com/owpz/prisma-ksuid/discussions) (if enabled)
+For general questions or discussions about drizzle-ksuid, feel free to:
+- Open a [GitHub Discussion](https://github.com/owpz/drizzle-ksuid/discussions) (if enabled)
 - Create an issue with the "question" label
 - Reach out through the project's communication channels
 
 ## License
 
-By contributing to prisma-ksuid, you agree that your contributions will be licensed under the same license as the project (see LICENSE file).
+By contributing to drizzle-ksuid, you agree that your contributions will be licensed under the same license as the project (see LICENSE file).
 
 ## Thank You!
 
-Your contributions help make prisma-ksuid better for everyone. We appreciate your time and effort in improving this project!
+Your contributions help make drizzle-ksuid better for everyone. We appreciate your time and effort in improving this project!

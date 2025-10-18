@@ -1,11 +1,11 @@
 /**
- * Fuzzing tests for prisma-ksuid using fast-check
+ * Fuzzing tests for drizzle-ksuid using fast-check
  * These tests use property-based testing to find edge cases
  */
 
 import * as fc from 'fast-check';
 import { generateKSUID } from '../src/util/ksuid';
-import { createKsuidExtension } from '../src/prisma-extension';
+import { createKsuidHelpers } from '../src/drizzle-extension';
 
 describe('KSUID Fuzzing Tests', () => {
   describe('generateKSUID fuzzing', () => {
@@ -100,7 +100,7 @@ describe('KSUID Fuzzing Tests', () => {
     });
   });
 
-  describe('createKsuidExtension fuzzing', () => {
+  describe('createKsuidHelpers fuzzing', () => {
     it('should handle arbitrary prefix maps', () => {
       fc.assert(
         fc.property(
@@ -109,10 +109,9 @@ describe('KSUID Fuzzing Tests', () => {
             fc.string()
           ),
           (prefixMap) => {
-            const extension = createKsuidExtension({ prefixMap });
-            expect(extension).toBeDefined();
-            // Extension always has a name property, even with empty prefix maps
-            expect(typeof extension.name).toBe('string');
+            const helpers = createKsuidHelpers(prefixMap, 'pg');
+            expect(helpers).toBeDefined();
+            expect(typeof helpers.ksuid).toBe('function');
           }
         ),
         { numRuns: 100 }
@@ -120,21 +119,8 @@ describe('KSUID Fuzzing Tests', () => {
     });
 
     it('should handle empty prefix maps', () => {
-      const extension = createKsuidExtension({ prefixMap: {} });
-      expect(extension).toBeDefined();
-    });
-
-    it('should handle null and undefined in prefix maps gracefully', () => {
-      const testMaps = [
-        { User: null },
-        { User: undefined },
-        { User: '' },
-      ];
-
-      testMaps.forEach(prefixMap => {
-        const extension = createKsuidExtension({ prefixMap: prefixMap as any });
-        expect(extension).toBeDefined();
-      });
+      const helpers = createKsuidHelpers({}, 'pg');
+      expect(helpers).toBeDefined();
     });
 
     it('should handle large prefix maps', () => {
@@ -146,8 +132,8 @@ describe('KSUID Fuzzing Tests', () => {
             { minKeys: 50, maxKeys: 200 }
           ),
           (prefixMap) => {
-            const extension = createKsuidExtension({ prefixMap });
-            expect(extension).toBeDefined();
+            const helpers = createKsuidHelpers(prefixMap, 'pg');
+            expect(helpers).toBeDefined();
             expect(Object.keys(prefixMap).length).toBeGreaterThanOrEqual(50);
           }
         ),
@@ -155,17 +141,16 @@ describe('KSUID Fuzzing Tests', () => {
       );
     });
 
-    it('should handle processNestedCreates option with various values', () => {
+    it('should handle different database dialects', () => {
+      const dialects = ['pg', 'mysql', 'sqlite'] as const;
       fc.assert(
         fc.property(
-          fc.boolean(),
           fc.dictionary(fc.string({ minLength: 1 }), fc.string()),
-          (processNestedCreates, prefixMap) => {
-            const extension = createKsuidExtension({
-              prefixMap,
-              processNestedCreates
-            });
-            expect(extension).toBeDefined();
+          fc.constantFrom(...dialects),
+          (prefixMap, dialect) => {
+            const helpers = createKsuidHelpers(prefixMap, dialect);
+            expect(helpers).toBeDefined();
+            expect(typeof helpers.ksuid).toBe('function');
           }
         ),
         { numRuns: 100 }

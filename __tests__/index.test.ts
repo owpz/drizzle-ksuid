@@ -1,74 +1,80 @@
 import {
   generateKSUID,
-  createKsuidExtension,
-  createKsuidMiddleware,
+  ksuidText,
+  ksuidTextSqlite,
+  createKsuidHelpers,
 } from "../src";
 
 describe("Index Exports", () => {
   test("exports generateKSUID function correctly", () => {
-    expect(generateKSUID).toBeDefined();
-    expect(typeof generateKSUID).toBe("function");
-
-    // Verify function behavior is correct
-    const ksuid = generateKSUID();
-    expect(ksuid).toBeDefined();
-    expect(ksuid.length).toBe(27);
-  });
-
-  test("exports createKsuidExtension function correctly", () => {
-    expect(createKsuidExtension).toBeDefined();
-    expect(typeof createKsuidExtension).toBe("function");
-
-    // Verify function accepts proper parameters
-    const extension = createKsuidExtension({
-      prefixMap: { User: "usr_" },
-    });
-    expect(typeof extension).toBe("function");
-  });
-
-  test("createKsuidMiddleware exists for backward compatibility", () => {
     // Suppress console.warn for this test
     const originalWarn = console.warn;
     console.warn = jest.fn();
 
-    expect(createKsuidMiddleware).toBeDefined();
-    expect(typeof createKsuidMiddleware).toBe("function");
+    expect(generateKSUID).toBeDefined();
+    expect(typeof generateKSUID).toBe("function");
 
-    // Verify it returns an extension (same as createKsuidExtension)
-    const result = createKsuidMiddleware({
-      prefixMap: { User: "usr_" },
-    });
-    expect(typeof result).toBe("function");
+    const ksuid = generateKSUID();
+    expect(ksuid).toBeDefined();
+    expect(ksuid.length).toBe(27);
 
     // Verify deprecation warning was shown
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining("createKsuidMiddleware is deprecated"),
+      expect.stringContaining("generateKSUID` is deprecated for external use")
     );
 
-    // Restore console.warn
     console.warn = originalWarn;
   });
 
-  test("createKsuidExtension supports enhanced features", () => {
-    // Test that it accepts the processNestedCreates option
-    const extension = createKsuidExtension({
-      prefixMap: { User: "usr_", Profile: "prof_" },
-      processNestedCreates: true,
-    });
-    expect(typeof extension).toBe("function");
+  test("exports ksuidText function correctly", () => {
+    expect(ksuidText).toBeDefined();
+    expect(typeof ksuidText).toBe("function");
 
-    // Test with processNestedCreates disabled
-    const extensionNoNested = createKsuidExtension({
-      prefixMap: { User: "usr_" },
-      processNestedCreates: false,
-    });
-    expect(typeof extensionNoNested).toBe("function");
+    const column = ksuidText("id", { prefix: "usr_" });
+    expect(typeof column).toBe("object");
+  });
 
-    // Test with prefixFn
-    const extensionWithFn = createKsuidExtension({
-      prefixMap: { User: "usr_" },
-      prefixFn: (model) => `${model.toLowerCase()}_`,
-    });
-    expect(typeof extensionWithFn).toBe("function");
+  test("exports ksuidTextSqlite function correctly", () => {
+    expect(ksuidTextSqlite).toBeDefined();
+    expect(typeof ksuidTextSqlite).toBe("function");
+
+    const column = ksuidTextSqlite("id", { prefix: "usr_" });
+    expect(typeof column).toBe("object");
+  });
+
+  test("exports createKsuidHelpers function correctly", () => {
+    expect(createKsuidHelpers).toBeDefined();
+    expect(typeof createKsuidHelpers).toBe("function");
+
+    const helpers = createKsuidHelpers(
+      { User: "usr_", Profile: "prof_" },
+      "sqlite"
+    );
+    expect(helpers).toBeDefined();
+    expect(typeof helpers.ksuid).toBe("function");
+  });
+
+  test("createKsuidHelpers supports multiple dialects", () => {
+    const pgHelpers = createKsuidHelpers({ User: "usr_" }, "pg");
+    expect(typeof pgHelpers.ksuid).toBe("function");
+
+    const mysqlHelpers = createKsuidHelpers({ User: "usr_" }, "mysql");
+    expect(typeof mysqlHelpers.ksuid).toBe("function");
+    expect(typeof mysqlHelpers.ksuidText).toBe("function");
+
+    const sqliteHelpers = createKsuidHelpers({ User: "usr_" }, "sqlite");
+    expect(typeof sqliteHelpers.ksuid).toBe("function");
+  });
+
+  test("generateKSUID with prefix works correctly", () => {
+    const originalWarn = console.warn;
+    console.warn = jest.fn();
+
+    const ksuid = generateKSUID("usr_");
+    expect(ksuid).toBeDefined();
+    expect(ksuid.startsWith("usr_")).toBe(true);
+    expect(ksuid.length).toBe(31); // 4 char prefix + 27 char KSUID
+
+    console.warn = originalWarn;
   });
 });
