@@ -1,23 +1,17 @@
-[![NPM Version](https://img.shields.io/npm/v/@owpz/prisma-ksuid)](https://www.npmjs.com/package/@owpz/prisma-ksuid)
+# @owpz/drizzle-ksuid
+
+[![NPM Version](https://img.shields.io/npm/v/@owpz/drizzle-ksuid)](https://www.npmjs.com/package/@owpz/drizzle-ksuid)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml)
-[![Publish](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle-0.23.2+-green.svg)](https://orm.drizzle.team/)
 
-# @owpz/prisma-ksuid
-
-A production-ready Prisma Client extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
+A production-ready Drizzle ORM extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
 ## 📋 Project Links
 
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute, report issues, and submit pull requests
 - **[Security Policy](SECURITY.md)** - How to report security vulnerabilities
-- **[GitHub Issues](https://github.com/owpz/prisma-ksuid/issues)** - Report bugs or request features
-- **[NPM Package](https://www.npmjs.com/package/@owpz/prisma-ksuid)** - Install the package
-
-> **Important**:
->
-> - **Requires Prisma 4.16.0+** - This is when the extension API (`$extends`) was introduced
-> - **For Prisma 6.14.0+** - The extension API is mandatory as middleware support (`$use`) was completely removed
+- **[GitHub Issues](https://github.com/owpz/drizzle-ksuid/issues)** - Report bugs or request features
+- **[NPM Package](https://www.npmjs.com/package/@owpz/drizzle-ksuid)** - Install the package
 
 ## What is a KSUID?
 
@@ -34,352 +28,327 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
 
 ## Quick Start
 
-1. **Install the package:**
+### 1. Install the package
 
-   ```bash
-   npm install @owpz/prisma-ksuid
-   ```
-
-2. **Set up your Prisma schema** with string IDs:
-
-   ```prisma
-   model User {
-     id        String   @id @default(dbgenerated()) @map("id")
-     name      String
-     email     String   @unique
-     createdAt DateTime @default(now())
-     updatedAt DateTime @updatedAt
-   }
-   ```
-
-3. **Configure the extension:**
-
-   ```typescript
-   import { PrismaClient } from "@prisma/client";
-   import { createKsuidExtension } from "@owpz/prisma-ksuid";
-
-   const prisma = new PrismaClient().$extends(
-     createKsuidExtension({
-       prefixMap: { User: "usr_" },
-     }),
-   );
-   ```
-
-## Migration from Middleware
-
-If you're upgrading from an older version that used `createKsuidMiddleware`:
-
-### Before (Prisma < 6.14.0 with middleware)
-
-```typescript
-import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
-
-const prisma = new PrismaClient();
-prisma.$use(createKsuidMiddleware({ prefixMap }));
+```bash
+npm install @owpz/drizzle-ksuid
+# or
+yarn add @owpz/drizzle-ksuid
+# or
+pnpm add @owpz/drizzle-ksuid
 ```
 
-### After (Prisma 4.16.0+ with extensions)
+### 2. Define your schema with KSUID columns
+
+**PostgreSQL:**
 
 ```typescript
-import { createKsuidExtension } from "@owpz/prisma-ksuid";
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { ksuidText } from '@owpz/drizzle-ksuid';
 
-const prisma = new PrismaClient().$extends(createKsuidExtension({ prefixMap }));
+export const users = pgTable('users', {
+  id: ksuidText('id', { prefix: 'usr_' }).primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const posts = pgTable('posts', {
+  id: ksuidText('id', { prefix: 'post_' }).primaryKey(),
+  title: text('title').notNull(),
+  content: text('content'),
+  authorId: text('author_id').notNull().references(() => users.id),
+});
 ```
 
-> **Note**: `createKsuidMiddleware` is still exported for backward compatibility but will show a deprecation warning. It won't work with Prisma 6.14.0+ since `$use` has been removed.
+**MySQL:**
+
+```typescript
+import { mysqlTable, varchar, timestamp } from 'drizzle-orm/mysql-core';
+import { ksuidVarchar } from '@owpz/drizzle-ksuid';
+
+export const users = mysqlTable('users', {
+  id: ksuidVarchar('id', { prefix: 'usr_', length: 64 }).primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+```
+
+**SQLite:**
+
+```typescript
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { ksuidTextSqlite } from '@owpz/drizzle-ksuid';
+
+export const users = sqliteTable('users', {
+  id: ksuidTextSqlite('id', { prefix: 'usr_' }).primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+```
+
+### 3. Use your schema
+
+```typescript
+import { drizzle } from 'drizzle-orm/[your-adapter]';
+import * as schema from './schema';
+
+const db = drizzle(connection, { schema });
+
+// Insert a user - ID will be auto-generated with usr_ prefix
+const [user] = await db.insert(schema.users).values({
+  email: 'user@example.com',
+  name: 'John Doe'
+}).returning();
+
+console.log(user.id); // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
+```
 
 ## Advanced Usage
 
-### Multiple models with prefixes
+### Using the Helper Factory
+
+For managing multiple models with consistent prefixes, use `createKsuidHelpers`:
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
-import { createKsuidExtension } from "@owpz/prisma-ksuid";
+import { pgTable, text } from 'drizzle-orm/pg-core';
+import { createKsuidHelpers } from '@owpz/drizzle-ksuid';
 
-const prefixMap = {
-  User: "usr_",
-  PaymentIntent: "pi_",
-  Customer: "cus_",
-  Post: "post_",
-  Comment: "cmt_",
-};
+const { ksuid } = createKsuidHelpers({
+  User: 'usr_',
+  Post: 'post_',
+  Comment: 'cmt_',
+  Product: 'prod_',
+}, 'pg');
 
-const prisma = new PrismaClient().$extends(createKsuidExtension({ prefixMap }));
+export const users = pgTable('users', {
+  id: ksuid('User').primaryKey(),
+  email: text('email').notNull(),
+});
 
-export default prisma;
-```
+export const posts = pgTable('posts', {
+  id: ksuid('Post').primaryKey(),
+  title: text('title').notNull(),
+  authorId: text('author_id').notNull().references(() => users.id),
+});
 
-### With fallback prefix function
-
-```typescript
-const prefixMap = {
-  User: "usr_",
-  Post: "post_",
-};
-
-const prefixFn = (model: string) => model.slice(0, 3).toLowerCase() + "_";
-
-const prisma = new PrismaClient().$extends(
-  createKsuidExtension({
-    prefixMap,
-    prefixFn, // Used for models not in prefixMap
-  }),
-);
-```
-
-### With custom primary key fields
-
-```typescript
-// For models using different primary key field names
-const prisma = new PrismaClient().$extends(
-  createKsuidExtension({
-    prefixMap: {
-      User: "usr_",
-      Session: "sess_",
-    },
-    primaryKeyField: (model) => {
-      // Session model uses 'token' as primary key
-      if (model === "Session") return "token";
-      // Others use default 'id'
-      return "id";
-    },
-  }),
-);
-```
-
-### Working with upserts
-
-```typescript
-// The extension generates KSUIDs for the create portion of upserts
-const user = await prisma.user.upsert({
-  where: { email: "user@example.com" },
-  update: { name: "Updated Name" },
-  create: {
-    email: "user@example.com",
-    name: "New User",
-    // ID will be generated with usr_ prefix
-  },
+export const comments = pgTable('comments', {
+  id: ksuid('Comment').primaryKey(),
+  content: text('content').notNull(),
+  postId: text('post_id').notNull().references(() => posts.id),
 });
 ```
 
-### Using createManyAndReturn (Prisma 6+)
+### Dialect-Specific Exports
 
 ```typescript
-// Create multiple records and get them back with generated IDs
-const users = await prisma.user.createManyAndReturn({
-  data: [
-    { email: "user1@example.com", name: "User 1" },
-    { email: "user2@example.com", name: "User 2" },
-    // IDs will be generated with usr_ prefix
-  ],
+// PostgreSQL
+import { pg } from '@owpz/drizzle-ksuid';
+const users = pgTable('users', {
+  id: pg.ksuidText('id', { prefix: 'usr_' }).primaryKey(),
 });
 
-console.log(users);
-// [
-//   { id: 'usr_2KjMLq...', email: 'user1@example.com', ... },
-//   { id: 'usr_2KjMLr...', email: 'user2@example.com', ... }
-// ]
+// MySQL
+import { mysql } from '@owpz/drizzle-ksuid';
+const users = mysqlTable('users', {
+  id: mysql.ksuidVarchar('id', { prefix: 'usr_', length: 64 }).primaryKey(),
+});
+
+// SQLite
+import { sqlite } from '@owpz/drizzle-ksuid';
+const users = sqliteTable('users', {
+  id: sqlite.ksuidText('id', { prefix: 'usr_' }).primaryKey(),
+});
 ```
 
-### Using the KSUID generator directly
-
-> **⚠️ DEPRECATED**: Direct usage of `generateKSUID` from this package is deprecated and will be removed in version v25.8 or greater. Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly for standalone KSUID generation.
+### Working with Relational Data
 
 ```typescript
-// ❌ Deprecated - will be removed in future versions
-import { generateKSUID } from "@owpz/prisma-ksuid";
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { users, posts } from './schema';
 
-// ✅ Recommended - use the core library instead
-import { KSUID } from "@owpz/ksuid";
+const db = drizzle(connection);
 
-// Generate KSUIDs with the core library
-const userId = "usr_" + KSUID.random().toString();
-console.log(userId); // usr_1xGVYLMNZO2PfHqPnRlwu5NFNMB
+// Create user and post in a transaction
+const result = await db.transaction(async (tx) => {
+  const [user] = await tx.insert(users).values({
+    email: 'author@example.com',
+    name: 'Jane Author'
+  }).returning();
 
-const id = KSUID.random().toString();
-console.log(id); // 1xGVYLMNZO2PfHqPnRlwu5NFNMB
+  const [post] = await tx.insert(posts).values({
+    title: 'My First Post',
+    content: 'Hello, world!',
+    authorId: user.id  // Use the generated KSUID
+  }).returning();
+
+  return { user, post };
+});
+
+console.log(result.user.id);  // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
+console.log(result.post.id);  // post_2KjMLqZ1APfHqPnRlwu5NFNMC
 ```
 
-## Features
+### Batch Inserts
 
-This extension supports all Prisma operations that create new records:
+```typescript
+const users = await db.insert(schema.users).values([
+  { email: 'user1@example.com', name: 'User 1' },
+  { email: 'user2@example.com', name: 'User 2' },
+  { email: 'user3@example.com', name: 'User 3' },
+]).returning();
 
-- ✅ **Basic creates**: `prisma.user.create()`
-- ✅ **Nested creates**: Creating related records in a single operation
-- ✅ **Batch creates**: `prisma.user.createMany()`
-- ✅ **Batch creates with return**: `prisma.user.createManyAndReturn()` (Prisma 6+)
-- ✅ **Upsert operations**: `prisma.user.upsert()` (generates ID for create portion)
-- ✅ **Nested upserts**: Handles nested `upsert` in relations
-- ✅ **Connect or create**: Nested `connectOrCreate` operations
-- ✅ **Transaction support**: Works within `prisma.$transaction()`
-- ✅ **Flexible prefixing**: Map-based or function-based prefix generation
-- ✅ **Custom primary keys**: Support for non-`id` fields and composite keys
-- ✅ **DMMF metadata**: Uses Prisma's metadata for accurate relation resolution
-- ✅ **Type safety**: Full TypeScript support with proper typing
+// Each user gets a unique KSUID with usr_ prefix
+users.forEach(user => {
+  console.log(user.id); // usr_[unique-ksuid]
+});
+```
 
-## Limitations
+### Custom IDs (Migration Scenarios)
 
-Due to Prisma extension constraints, this library **cannot** handle:
+```typescript
+// You can still provide custom IDs when needed
+const [user] = await db.insert(users).values({
+  id: 'usr_custom123456789012345678901',  // Custom ID
+  email: 'legacy@example.com',
+  name: 'Legacy User'
+}).returning();
 
-- ❌ **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass extensions
-- ❌ **Database-level operations**: Direct SQL INSERTs, stored procedures, or triggers
-- ❌ **Schema-level defaults**: Cannot override `@default(cuid())` or `@default(uuid())` in schema
-- ❌ **External inserts**: Records created outside of Prisma Client (e.g., database admin tools)
-- ❌ **Retroactive ID generation**: Cannot generate KSUIDs for existing records
+// Or let the library generate it automatically
+const [newUser] = await db.insert(users).values({
+  email: 'new@example.com',
+  name: 'New User'
+}).returning();
+```
 
 ## API Reference
 
-### `createKsuidExtension(options)`
+### Column Helpers
 
-Creates a Prisma Client extension that automatically generates KSUIDs for models during create operations.
+#### `ksuidText(name, options?)`
+Creates a PostgreSQL text column with KSUID auto-generation.
 
-#### Parameters
+**Parameters:**
+- `name` (string): Column name
+- `options.prefix` (string, optional): Prefix for the KSUID (default: `""`)
 
-- `options` (object, required): Configuration object with the following properties:
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `prefixMap` | `Record<string, string>` | Yes | - | Object mapping model names to their prefix strings |
-| `prefixFn` | `(model: string) => string` | No | `undefined` | Fallback function to generate prefixes for models not in prefixMap |
-| `processNestedCreates` | `boolean` | No | `true` | Enable/disable processing of nested create operations |
-| `primaryKeyField` | `string \| ((model: string) => string)` | No | `"id"` | Specify the primary key field name per model |
-
-#### Returns
-
-Returns a Prisma extension function compatible with `prisma.$extends()`.
-
-#### Example Usage
+**Returns:** PostgreSQL text column builder
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
-import { createKsuidExtension } from "@owpz/prisma-ksuid";
-
-const prisma = new PrismaClient().$extends(
-  createKsuidExtension({
-    prefixMap: {
-      User: "usr_",
-      Post: "post_",
-      Comment: "cmt_"
-    },
-    prefixFn: (model) => model.slice(0, 3).toLowerCase() + "_",
-    processNestedCreates: true,
-    primaryKeyField: "id"
-  })
-);
+ksuidText('id', { prefix: 'usr_' }).primaryKey()
 ```
 
-### Supported Operations
+#### `ksuidVarchar(name, options?)`
+Creates a MySQL varchar column with KSUID auto-generation.
 
-The extension automatically generates KSUIDs for the following Prisma operations:
+**Parameters:**
+- `name` (string): Column name
+- `options.prefix` (string, optional): Prefix for the KSUID (default: `""`)
+- `options.length` (number, optional): VARCHAR length (default: `64`)
 
-#### Basic Operations
+**Returns:** MySQL varchar column builder
 
-- **`create`**: Creates a single record with generated KSUID
-  ```typescript
-  const user = await prisma.user.create({
-    data: { email: "user@example.com", name: "John Doe" }
-  });
-  // Returns: { id: "usr_2KjMLq...", email: "...", name: "..." }
-  ```
+```typescript
+ksuidVarchar('id', { prefix: 'usr_', length: 64 }).primaryKey()
+```
 
-- **`createMany`**: Creates multiple records with generated KSUIDs
-  ```typescript
-  await prisma.user.createMany({
-    data: [
-      { email: "user1@example.com", name: "User 1" },
-      { email: "user2@example.com", name: "User 2" }
-    ]
-  });
-  ```
+#### `ksuidTextMysql(name, options?)`
+Creates a MySQL text column with KSUID auto-generation.
 
-- **`createManyAndReturn`** (Prisma 6+): Creates multiple records and returns them
-  ```typescript
-  const users = await prisma.user.createManyAndReturn({
-    data: [
-      { email: "user1@example.com", name: "User 1" },
-      { email: "user2@example.com", name: "User 2" }
-    ]
-  });
-  // Returns array of created users with generated IDs
-  ```
+**Parameters:**
+- `name` (string): Column name
+- `options.prefix` (string, optional): Prefix for the KSUID (default: `""`)
 
-#### Advanced Operations
+**Returns:** MySQL text column builder
 
-- **`upsert`**: Creates with KSUID if record doesn't exist
-  ```typescript
-  const user = await prisma.user.upsert({
-    where: { email: "user@example.com" },
-    update: { name: "Updated Name" },
-    create: { email: "user@example.com", name: "New User" }
-  });
-  ```
+```typescript
+ksuidTextMysql('id', { prefix: 'usr_' }).primaryKey()
+```
 
-- **Nested Creates**: Generates KSUIDs for related records
-  ```typescript
-  const user = await prisma.user.create({
-    data: {
-      email: "user@example.com",
-      posts: {
-        create: [
-          { title: "First Post" },  // Gets post_ prefix
-          { title: "Second Post" }   // Gets post_ prefix
-        ]
-      }
-    }
-  });
-  ```
+#### `ksuidTextSqlite(name, options?)`
+Creates an SQLite text column with KSUID auto-generation.
 
-- **Connect or Create**: Generates KSUID for create portion
-  ```typescript
-  const post = await prisma.post.create({
-    data: {
-      title: "New Post",
-      author: {
-        connectOrCreate: {
-          where: { email: "user@example.com" },
-          create: { email: "user@example.com", name: "New User" }
-        }
-      }
-    }
-  });
-  ```
+**Parameters:**
+- `name` (string): Column name
+- `options.prefix` (string, optional): Prefix for the KSUID (default: `""`)
+
+**Returns:** SQLite text column builder
+
+```typescript
+ksuidTextSqlite('id', { prefix: 'usr_' }).primaryKey()
+```
+
+### `createKsuidHelpers(prefixMap, dialect?)`
+
+Creates a factory function for generating KSUID columns with predefined prefixes.
+
+**Parameters:**
+- `prefixMap` (Record<string, string>): Map of model names to prefixes
+- `dialect` ('pg' | 'mysql' | 'sqlite', optional): Database dialect (default: `'pg'`)
+
+**Returns:** Object with helper methods
+
+```typescript
+const { ksuid } = createKsuidHelpers({
+  User: 'usr_',
+  Post: 'post_'
+}, 'pg');
+
+// Use in schema
+id: ksuid('User').primaryKey()
+```
+
+### Dialect-Specific Exports
+
+#### `pg.ksuidText(name, options?)`
+PostgreSQL-specific export for KSUID text columns.
+
+#### `mysql.ksuidVarchar(name, options?)` & `mysql.ksuidText(name, options?)`
+MySQL-specific exports for KSUID varchar and text columns.
+
+#### `sqlite.ksuidText(name, options?)`
+SQLite-specific export for KSUID text columns.
 
 ### `generateKSUID(prefix?)` ⚠️ DEPRECATED
 
 > **Deprecated**: Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly instead.
 
-Generates a K-Sortable Unique ID (KSUID).
-
-#### Parameters
-
-- `prefix` (string, optional): A string prefix to add to the generated KSUID. Default is an empty string.
-
-#### Returns
-
-Returns a string containing the generated KSUID with the optional prefix.
-
-#### Migration Guide
+Generates a standalone KSUID with optional prefix.
 
 ```typescript
-// ❌ Old way (deprecated)
-import { generateKSUID } from "@owpz/prisma-ksuid";
-const id = generateKSUID("usr_");
+// ❌ Deprecated
+import { generateKSUID } from '@owpz/drizzle-ksuid';
+const id = generateKSUID('usr_');
 
-// ✅ New way (recommended)
-import { KSUID } from "@owpz/ksuid";
-const id = "usr_" + KSUID.random().toString();
+// ✅ Recommended
+import { KSUID } from '@owpz/ksuid';
+const id = 'usr_' + KSUID.random().toString();
 ```
 
-## 🔌 Database Integration
+## Features
 
-This extension integrates seamlessly with Prisma's ecosystem:
+✅ **Auto-generation**: KSUIDs generated automatically via Drizzle's `$defaultFn`
+✅ **Multi-database**: PostgreSQL, MySQL, and SQLite support
+✅ **Batch inserts**: Full support for bulk operations
+✅ **Custom prefixes**: Model-specific prefixes for better readability
+✅ **Type-safe**: Full TypeScript support with proper type inference
+✅ **Transactions**: Works seamlessly within Drizzle transactions
+✅ **Custom IDs**: Optionally provide your own IDs
+✅ **Time-sortable**: Chronologically sortable IDs out of the box
+✅ **Zero dependencies**: Relies only on @owpz/ksuid for ID generation
 
-### **Core Prisma Features**
+## Comparison with UUID/CUID
 
-- **Full TypeScript support** with proper type inference
-- **Transaction support** for consistent ID generation
-- **Migration compatible** with existing string primary keys
-- **Works with all databases** Prisma supports (PostgreSQL, MySQL, SQLite, etc.)
+| Feature | KSUID | UUID v4 | CUID |
+|---------|-------|---------|------|
+| Length | 27 chars | 36 chars | 25 chars |
+| Time-sortable | ✅ Yes | ❌ No | ✅ Yes |
+| URL-safe | ✅ Yes | ⚠️ Contains `-` | ✅ Yes |
+| Collision-resistant | ✅ High | ✅ High | ✅ High |
+| Prefixable | ✅ Easy | ⚠️ Harder | ⚠️ Harder |
+| Database indexing | ✅ Excellent | ⚠️ Poor | ✅ Good |
 
 ## License
 
