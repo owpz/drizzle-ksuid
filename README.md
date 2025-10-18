@@ -6,6 +6,73 @@
 
 A production-ready Drizzle ORM extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
+## 🚀 Happy Path (Recommended)
+
+The fastest way to get going is to centralize your prefixes with `createKsuidHelpers` and reuse the generated helpers across your schema. The example below targets PostgreSQL, but the same pattern works for MySQL and SQLite by changing the dialect argument.
+
+### 1. Install once
+
+```bash
+npm install @owpz/drizzle-ksuid
+# or: yarn add @owpz/drizzle-ksuid
+# or: pnpm add @owpz/drizzle-ksuid
+```
+
+### 2. Create a shared helper (e.g. `src/db/ksuid.ts`)
+
+```typescript
+import { createKsuidHelpers } from '@owpz/drizzle-ksuid';
+
+export const { ksuid } = createKsuidHelpers(
+  {
+    User: 'usr_',
+    Post: 'post_',
+    Comment: 'cmt_',
+  },
+  'pg' // Change to 'mysql' or 'sqlite' as needed
+);
+```
+
+### 3. Define tables with the helper
+
+```typescript
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { ksuid } from './ksuid';
+
+export const users = pgTable('users', {
+  id: ksuid('User').primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const posts = pgTable('posts', {
+  id: ksuid('Post').primaryKey(),
+  title: text('title').notNull(),
+  authorId: text('author_id').notNull().references(() => users.id),
+});
+```
+
+### 4. Insert records—IDs are generated automatically
+
+```typescript
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema';
+
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client, { schema });
+
+const [user] = await db.insert(schema.users).values({
+  email: 'user@example.com',
+  name: 'Happy Path User',
+}).returning();
+
+console.log(user.id); // usr_2KjMLqXZ9PfHqPnRlwu5NFNMB
+```
+
+> **Other dialects:** Pass `'mysql'` or `'sqlite'` to `createKsuidHelpers` and the returned helpers will use `VARCHAR` or `TEXT` defaults that suit each database automatically.
+
 ## 📋 Project Links
 
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute, report issues, and submit pull requests
