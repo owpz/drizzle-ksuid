@@ -82,13 +82,11 @@ describe("Drizzle Extension", () => {
     expect(typeof helpers.ksuid).toBe("function");
   });
 
-  test("createKsuidHelpers throws error for undefined model", () => {
-    const helpers = createKsuidHelpers({ User: "usr_" }, "pg");
+  test("createKsuidHelpers derives prefixes when not provided", () => {
+    const helpers = createKsuidHelpers({}, "pg");
+    const column = helpers.ksuid("OrderItem") as any;
+    const generatedId = column.config.defaultFn();
 
-    expect(() => {
-      helpers.ksuid("NonExistentModel");
-    }).toThrowError(
-      /No KSUID prefix defined for model "NonExistentModel"./
-    );
+    expect(generatedId.startsWith("order_item_")).toBe(true);
   });
 });

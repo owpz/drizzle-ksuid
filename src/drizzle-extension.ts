@@ -154,6 +154,18 @@ type HelperMap = {
   sqlite: SqliteHelpers;
 };
 
+const toSnakeCase = (value: string) => {
+  const normalized = value
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .replace(/__+/g, "_")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+
+  const base = normalized || "id";
+  return base.endsWith("_") ? base : `${base}_`;
+};
+
 const buildHelpers: { [K in Dialect]: (getPrefix: PrefixGetter) => HelperMap[K] } = {
   pg: (getPrefix) => ({
     ksuid: (modelName, columnName = "id") => {
@@ -180,22 +192,26 @@ const buildHelpers: { [K in Dialect]: (getPrefix: PrefixGetter) => HelperMap[K] 
 };
 
 export function createKsuidHelpers<D extends Dialect = "pg">(
-  prefixMap: PrefixMap,
+  prefixMap: PrefixMap = {},
   dialect: D = "pg" as D
 ): HelperMap[D] {
+  const cache = new Map<string, string>();
   const getPrefix: PrefixGetter = (modelName) => {
     const prefix = prefixMap[modelName];
-    if (!prefix) {
-      const availableModels = Object.keys(prefixMap);
-      const availableText = availableModels.length
-        ? ` Available models: ${availableModels.join(", ")}`
-        : " No prefixes have been configured.";
-
-      throw new Error(
-        `No KSUID prefix defined for model "${modelName}".${availableText}`
-      );
+    if (prefix) {
+      return prefix;
     }
-    return prefix;
+
+    if (cache.has(modelName)) {
+      const cached = cache.get(modelName);
+      if (cached !== undefined) {
+        return cached;
+      }
+    }
+
+    const derived = toSnakeCase(modelName);
+    cache.set(modelName, derived);
+    return derived;
   };
 
   return buildHelpers[dialect](getPrefix);

@@ -178,6 +178,13 @@ describe("Coverage Tests - All Column Helpers", () => {
       const column = helpers.ksuid("User");
       expect(column).toBeDefined();
     });
+
+    test("derives prefixes automatically when missing", () => {
+      const helpers = createKsuidHelpers();
+      const column = helpers.ksuid("WidgetThing") as any;
+      const generated = column.config.defaultFn();
+      expect(generated.startsWith("widget_thing_")).toBe(true);
+    });
   });
 
   describe("Edge cases", () => {
