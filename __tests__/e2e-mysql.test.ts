@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "./schemas/mysql";
@@ -88,7 +89,7 @@ describe("E2E MySQL Tests", () => {
       name: "Test User",
     }).$returningId();
 
-    const [fetchedUser] = await db.select().from(schema.users).where((users, { eq }) => eq(users.email, "test@example.com"));
+    const [fetchedUser] = await db.select().from(schema.users).where(eq(schema.users.email, "test@example.com"));
 
     expect(fetchedUser.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
     expect(fetchedUser.id.startsWith("usr_")).toBe(true);
@@ -114,7 +115,7 @@ describe("E2E MySQL Tests", () => {
       name: "Author",
     }).$returningId();
 
-    const [fetchedUser] = await db.select().from(schema.users).where((users, { eq }) => eq(users.email, "author@example.com"));
+    const [fetchedUser] = await db.select().from(schema.users).where(eq(schema.users.email, "author@example.com"));
 
     const [post] = await db.insert(schema.posts).values({
       title: "Test Post",
@@ -153,7 +154,7 @@ describe("E2E MySQL Tests", () => {
         name: "Transactional User",
       });
 
-      const [user] = await tx.select().from(schema.users).where((users, { eq }) => eq(users.email, "transactional@example.com"));
+      const [user] = await tx.select().from(schema.users).where(eq(schema.users.email, "transactional@example.com"));
 
       await tx.insert(schema.profiles).values({
         bio: "Test bio",
@@ -185,7 +186,7 @@ describe("E2E MySQL Tests", () => {
       name: "Custom ID User",
     });
 
-    const [user] = await db.select().from(schema.users).where((users, { eq }) => eq(users.id, customId));
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, customId));
 
     expect(user.id).toBe(customId);
   });
@@ -213,7 +214,7 @@ describe("E2E MySQL Tests", () => {
       name: "Relational User",
     });
 
-    const [user] = await db.select().from(schema.users).where((users, { eq }) => eq(users.email, "relational@example.com"));
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.email, "relational@example.com"));
 
     await db.insert(schema.profiles).values({
       bio: "Test bio for relational query",
